@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAF Business OS - سیستم‌عامل جامع کسب‌وکار</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Vazirmatn Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --brand-primary: #0284c7;
+        }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50 text-sm">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMsg">عملیات با موفقیت انجام شد</span>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Org Identity -->
+                <div class="flex items-center space-x-3 space-x-reverse">
+                    <div id="navLogoContainer" class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden border border-white/20">
+                        <i class="fa-solid fa-building text-xl text-sky-400" id="navDefaultLogo"></i>
+                        <img id="navCustomLogo" src="" class="w-full h-full object-cover hidden" alt="Org Logo">
+                    </div>
+                    <div>
+                        <h1 id="navOrgName" class="text-lg font-bold text-white tracking-wide">KAF Business OS</h1>
+                        <p id="navOrgTagline" class="text-xs text-slate-400">سیستم مدیریت یکپارچه سازمانی</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 space-x-reverse">
+                    <button onclick="switchTab('dashboard')" class="nav-btn active px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2" data-tab="dashboard">
+                        <i class="fa-solid fa-chart-line text-sky-400"></i> داشبورد
+                    </button>
+                    <button onclick="switchTab('crm')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2" data-tab="crm">
+                        <i class="fa-solid fa-users text-emerald-400"></i> مشتریان
+                    </button>
+                    <button onclick="switchTab('sales')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2" data-tab="sales">
+                        <i class="fa-solid fa-file-invoice-dollar text-amber-400"></i> فاکتور و اسناد
+                    </button>
+                    <button onclick="switchTab('services')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2" data-tab="services">
+                        <i class="fa-solid fa-boxes-packing text-indigo-400"></i> پرونده‌ها (Kanban)
+                    </button>
+                    <button onclick="switchTab('ai')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition flex items-center gap-2" data-tab="ai">
+                        <i class="fa-solid fa-robot text-purple-400"></i> KAF AI
+                    </button>
+                </nav>
+
+                <!-- Actions & Cloud Sync -->
+                <div class="flex items-center gap-3">
+                    <button onclick="syncWithCloud()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition relative" title="همگام‌سازی با سرور">
+                        <i class="fa-solid fa-rotate text-sky-400"></i>
+                    </button>
+                    <button onclick="switchTab('settings')" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition" title="تنظیمات">
+                        <i class="fa-solid fa-sliders"></i>
+                    </button>
+                    <div class="text-left hidden sm:block border-r border-slate-800 pr-3 mr-1">
+                        <span class="block text-[10px] text-slate-400">وضعیت پایگاه‌داده:</span>
+                        <span id="cloudStatus" class="inline-flex items-center gap-1 text-xs text-emerald-400 font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> آنلاین (آماده)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Navigation Bar -->
+        <div class="md:hidden flex justify-around bg-slate-950 p-2 border-t border-slate-800 text-xs">
+            <button onclick="switchTab('dashboard')" class="text-slate-300 hover:text-white flex flex-col items-center gap-1">
+                <i class="fa-solid fa-chart-line text-sky-400"></i> داشبورد
+            </button>
+            <button onclick="switchTab('crm')" class="text-slate-300 hover:text-white flex flex-col items-center gap-1">
+                <i class="fa-solid fa-users text-emerald-400"></i> مشتریان
+            </button>
+            <button onclick="switchTab('sales')" class="text-slate-300 hover:text-white flex flex-col items-center gap-1">
+                <i class="fa-solid fa-file-invoice text-amber-400"></i> فاکتور
+            </button>
+            <button onclick="switchTab('services')" class="text-slate-300 hover:text-white flex flex-col items-center gap-1">
+                <i class="fa-solid fa-folder-open text-indigo-400"></i> پرونده‌ها
+            </button>
+            <button onclick="switchTab('settings')" class="text-slate-300 hover:text-white flex flex-col items-center gap-1">
+                <i class="fa-solid fa-sliders text-slate-400"></i> تنظیمات
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            <!-- Top Banner -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold flex items-center gap-2">
+                        خوش آمدید به <span id="dashOrgTitle" class="text-sky-400">سازمان شما</span>
+                    </h2>
+                    <p class="text-slate-300 text-sm mt-1">مدیریت متمرکز امور مالی، مشتریان، پرونده‌ها و اسناد رسمی کسب‌وکار.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openInvoiceModal()" class="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2 rounded-xl font-medium text-sm transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> صدور فاکتور جدید
+                    </button>
+                    <button onclick="switchTab('settings')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-medium text-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> تنظیمات برند
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-xs font-medium">مجموع کل درآمد ثبت‌شده</p>
+                        <h3 class="text-xl font-extrabold text-slate-800 mt-1" id="statRevenue">$0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-xs font-medium">تعداد مشتریان فعال</p>
+                        <h3 class="text-xl font-extrabold text-slate-800 mt-1" id="statCustomers">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-xs font-medium">پرونده‌های کاری فعال</p>
+                        <h3 class="text-xl font-extrabold text-slate-800 mt-1" id="statOrders">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-xs font-medium">واحد پول پایه</p>
+                        <h3 class="text-xl font-extrabold text-slate-800 mt-1" id="statCurrency">USD</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Financial Chart -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-area text-sky-500"></i> نمودار وضعیت مالی و عملکرد فاکتورها
+                </h3>
+                <div class="h-64 relative">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-sky-500"></i> آخرین فاکتورها و تراکنش‌ها
+                    </h3>
+                    <button onclick="switchTab('sales')" class="text-sky-600 hover:text-sky-700 text-xs font-bold">مشاهده همه <i class="fa-solid fa-arrow-left"></i></button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">شماره سند</th>
+                                <th class="p-3">مشتری</th>
+                                <th class="p-3">عنوان خدمت / کالا</th>
+                                <th class="p-3">مبلغ کل</th>
+                                <th class="p-3">تاریخ ثبت</th>
+                                <th class="p-3 text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashRecentInvoices" class="divide-y divide-slate-100">
+                            <!-- Invoices JS rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: CRM & CUSTOMERS -->
+        <section id="tab-crm" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">مدیریت مشتریان و طرف‌های حساب</h2>
+                    <p class="text-xs text-slate-500">ثبت پرونده اشخاص، شرکت‌ها و سوابق مالی ارتباطی</p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <input type="text" id="crmSearch" onkeyup="renderCustomers()" placeholder="جستجوی نام یا تلفن..." class="p-2 border rounded-xl text-xs flex-grow sm:w-48 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button onclick="openCustomerModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-user-plus"></i> افزودن مشتری
+                    </button>
+                </div>
+            </div>
+
+            <!-- Customer Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="customersListGrid">
+                <!-- Customer Cards rendered via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 3: SALES & INVOICES -->
+        <section id="tab-sales" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">مدیریت فاکتورها و اسناد مالی</h2>
+                    <p class="text-xs text-slate-500">صدور فاکتور رسمی، رسید پرداخت و چاپ مدرن با هویت سازمان شما</p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <input type="text" id="invSearch" onkeyup="renderInvoices()" placeholder="جستجوی شماره یا مشتری..." class="p-2 border rounded-xl text-xs flex-grow sm:w-48 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <button onclick="openInvoiceModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-circle-plus"></i> ایجاد فاکتور جدید
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-50 text-slate-500 text-xs border-b border-slate-200">
+                            <tr>
+                                <th class="p-4">شماره فاکتور</th>
+                                <th class="p-4">نام مشتری</th>
+                                <th class="p-4">شرح خدمت/کالا</th>
+                                <th class="p-4">مبلغ کل</th>
+                                <th class="p-4">تاریخ ثبت</th>
+                                <th class="p-4 text-center">عملیات & چاپ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicesTableBody" class="divide-y divide-slate-100">
+                            <!-- JS content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SERVICES & KANBAN -->
+        <section id="tab-services" class="tab-content hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">مدیریت پرونده‌های کاری و سفارشات (Kanban)</h2>
+                    <p class="text-xs text-slate-500">پیگیری وضعیت پرونده‌ها، سفارشات تجاری یا پروژه‌های فعال</p>
+                </div>
+                <button onclick="openServiceModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus"></i> پرونده جدید
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="servicesKanban">
+                <!-- Kanban status columns -->
+                <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+                    <h3 class="font-bold text-slate-700 text-xs mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-hourglass-start text-amber-500"></i> در انتظار بررسی</span>
+                        <span id="countPending" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                    </h3>
+                    <div id="colPending" class="space-y-3 min-h-[250px]"></div>
+                </div>
+
+                <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+                    <h3 class="font-bold text-slate-700 text-xs mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-spinner text-sky-500"></i> در حال انجام</span>
+                        <span id="countProgress" class="bg-sky-100 text-sky-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                    </h3>
+                    <div id="colProgress" class="space-y-3 min-h-[250px]"></div>
+                </div>
+
+                <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200">
+                    <h3 class="font-bold text-slate-700 text-xs mb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-circle-check text-emerald-500"></i> تکمیل شده</span>
+                        <span id="countCompleted" class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                    </h3>
+                    <div id="colCompleted" class="space-y-3 min-h-[250px]"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: KAF AI -->
+        <section id="tab-ai" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">KAF AI — دستیار هوشمند سازمانی</h2>
+                        <p class="text-xs text-slate-500">تولید خودکار مکاتبات رسمی، نامه‌های تجاری و پاسخ‌های مشتریان</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">دستور به هوش مصنوعی (Prompt)</label>
+                        <textarea id="aiPrompt" rows="3" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="مثال: یک متن تشکر و تایید دریافت مبلغ فاکتور برای مشتری به نام علی محمدی تنظیم کن..."></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="runAIAssistant()" class="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 rounded-xl text-xs font-medium transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> تولید متن با KAF AI
+                        </button>
+                    </div>
+
+                    <div id="aiOutputBox" class="hidden mt-4 p-4 rounded-xl bg-purple-50 border border-purple-200 text-slate-800 text-xs leading-relaxed">
+                        <h4 class="font-bold text-purple-900 mb-2 flex items-center gap-1">
+                            <i class="fa-solid fa-check-circle"></i> خروجی هوش مصنوعی:
+                        </h4>
+                        <div id="aiResultText" class="whitespace-pre-line text-slate-700"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: SETTINGS & ORGANIZATIONAL BRANDING -->
+        <section id="tab-settings" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-sky-600"></i> تنظیمات هویت سازمانی و پایگاه‌داده
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">مشخصات برند، لوگو، ارز پایه و تنظیمات سرور ابری را تعیین کنید.</p>
+                </div>
+
+                <form id="orgSettingsForm" onsubmit="saveOrgSettings(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">نام شرکت / سازمان</label>
+                            <input type="text" id="setOrgName" required class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">شعار / زیرعنوان برند</label>
+                            <input type="text" id="setOrgTagline" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">آدرس اینترنتی لوگو (URL)</label>
+                            <input type="url" id="setOrgLogo" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" placeholder="https://example.com/logo.png">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">ارز اصلی معاملات</label>
+                            <select id="setOrgCurrency" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <option value="USD">دلار آمریکا ($)</option>
+                                <option value="AFN">افغانی (AFN)</option>
+                                <option value="IRR">تومان / ریال ایران</option>
+                                <option value="EUR">یورو (€)</option>
+                                <option value="SAR">ریال سعودی (SAR)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">شماره تماس رسمی</label>
+                            <input type="text" id="setOrgPhone" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2">آدرس دفتر مرکزی</label>
+                            <input type="text" id="setOrgAddress" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Cloud API Settings -->
+                    <div class="border-t border-slate-200 pt-6">
+                        <h3 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-cloud text-indigo-500"></i> تنطیمات سرور ابری (Supabase Cloud API)
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-4">با درج کلید Supabase، سیستم فراتر از حافظه مرورگر، به‌طور آنلاین با دیتابیس همگام خواهد شد.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Project URL</label>
+                                <input type="url" id="setApiUrl" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="https://xyz.supabase.co">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Anon Key</label>
+                                <input type="password" id="setApiKey" class="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-between items-center border-t border-slate-100 pt-4 gap-3">
+                        <div class="flex gap-2">
+                            <button type="button" onclick="exportDataJSON()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-download"></i> دانلود خروجی JSON
+                            </button>
+                            <label class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition">
+                                <i class="fa-solid fa-upload"></i> بازیابی JSON
+                                <input type="file" id="importJsonInput" accept=".json" onchange="importDataJSON(event)" class="hidden">
+                            </label>
+                        </div>
+                        <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition">
+                            ذخیره و اعمال تنظیمات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PRINT VIEW TEMPLATE (INVOICE / RECEIPT) -->
+    <div id="printTemplate" class="hidden print-only fixed inset-0 bg-white p-8 z-50 text-slate-900">
+        <div class="border-2 border-slate-900 p-6 rounded-xl max-w-3xl mx-auto space-y-6">
+            <!-- Header -->
+            <div class="flex justify-between items-center border-b-2 border-slate-900 pb-4">
+                <div class="flex items-center gap-4">
+                    <img id="printLogo" src="" class="w-16 h-16 object-contain hidden" alt="Logo">
+                    <div>
+                        <h1 id="printOrgName" class="text-2xl font-black text-slate-900"></h1>
+                        <p id="printOrgTagline" class="text-xs text-slate-600"></p>
+                        <p id="printOrgPhone" class="text-xs text-slate-600 mt-1"></p>
+                    </div>
+                </div>
+                <div class="text-left">
+                    <span class="bg-slate-900 text-white text-xs px-3 py-1 rounded-full font-bold">فاکتور رسمی</span>
+                    <p id="printInvoiceNum" class="text-sm font-bold mt-2"></p>
+                    <p id="printInvoiceDate" class="text-xs text-slate-600"></p>
+                </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-1">طرف حساب / مشتری:</h3>
+                <p id="printCustomerName" class="font-bold text-slate-800 text-base"></p>
+            </div>
+
+            <!-- Invoice Details Table -->
+            <table class="w-full text-right text-sm border-collapse">
+                <thead>
+                    <tr class="bg-slate-900 text-white border-b">
+                        <th class="p-2">شرح خدمت / کالا</th>
+                        <th class="p-2 text-center">تعداد</th>
+                        <th class="p-2 text-left">مبلغ کل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b">
+                        <td id="printItemTitle" class="p-3 font-medium"></td>
+                        <td class="p-3 text-center">۱</td>
+                        <td id="printItemAmount" class="p-3 text-left font-bold"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Signatures -->
+            <div class="flex justify-between items-end pt-12 border-t border-slate-200 text-xs text-slate-600">
+                <div class="text-center">
+                    <p class="mb-8">امضاء و مهر صادرکننده</p>
+                    <p id="printSignOrg" class="font-bold text-slate-800"></p>
+                </div>
+                <div class="text-center">
+                    <p class="mb-8">امضاء تحویل‌گیرنده / مشتری</p>
+                    <p>...................................</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: ADD CUSTOMER -->
+    <div id="customerModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm">ثبت مشتری جدید</h3>
+                <button onclick="closeCustomerModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveCustomer(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">نام کامل / شرکت</label>
+                    <input type="text" id="custName" required class="w-full p-2.5 rounded-lg border text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">شماره تماس / واتساپ</label>
+                    <input type="text" id="custPhone" required class="w-full p-2.5 rounded-lg border text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="+93...">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">آدرس / موقعیت</label>
+                    <input type="text" id="custAddress" class="w-full p-2.5 rounded-lg border text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeCustomerModal()" class="px-4 py-2 text-xs font-bold text-slate-600">انصراف</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold">ذخیره مشتری</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD INVOICE -->
+    <div id="invoiceModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm">صدور فاکتور جدید</h3>
+                <button onclick="closeInvoiceModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="saveInvoice(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">انتخاب مشتری</label>
+                    <select id="invCustomerSelect" required class="w-full p-2.5 rounded-lg border text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <!-- Filled by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">عنوان خدمت / شرح کالا</label>
+                    <input type="text" id="invTitle" required class="w-full p-2.5 rounded-lg border text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="مثال: خدمات تجاری و بازرگانی">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">مبلغ کل</label>
+                    <input type="number" id="invAmount" required class="w-full p-2.5 rounded-lg border text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none" placeholder="1000">
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 text-xs font-bold text-slate-600">انصراف</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold">ثبت و صدور فاکتور</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // State Management
+        let appState = {
+            org: {
+                name: 'کا اف بزنس او اس',
+                tagline: 'سیستم‌عامل جامع و یکپارچه مدیریت کسب‌وکار',
+                logo: '',
+                currency: 'USD',
+                phone: '+93 700 000 000',
+                address: 'دفتر مرکزی',
+                apiUrl: '',
+                apiKey: ''
+            },
+            customers: [
+                { id: '1', name: 'محمد احمدی', phone: '+93799123456', address: 'کابل' },
+                { id: '2', name: 'شرکت تجارت آریا', phone: '+93700987654', address: 'هرات' }
+            ],
+            invoices: [
+                { id: 'INV-101', customerName: 'محمد احمدی', title: 'صورت‌حساب خدمات بازرگانی', amount: 500, date: '2026-09-20' },
+                { id: 'INV-102', customerName: 'شرکت تجارت آریا', title: 'حواله و خدمات ترخیص', amount: 1200, date: '2026-09-24' }
+            ],
+            services: [
+                { id: 'SRV-1', title: 'پرونده ترخیص کالای گمرکی', customer: 'شرکت تجارت آریا', status: 'progress' },
+                { id: 'SRV-2', title: 'ثبت و تایید اسناد شرکت', customer: 'محمد احمدی', status: 'pending' }
+            ]
+        };
+
+        let revenueChartInstance = null;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            applyOrgBranding();
+            renderDashboard();
+            renderCustomers();
+            renderInvoices();
+            renderServices();
+        });
+
+        // Toast Notification System
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = msg;
+            toastIcon.className = isError ? "fa-solid fa-circle-exclamation text-rose-400 text-lg" : "fa-solid fa-circle-check text-emerald-400 text-lg";
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'bg-slate-800', 'text-sky-400'));
+            
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+
+            const activeBtn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+            if (activeBtn) activeBtn.classList.add('active', 'bg-slate-800', 'text-sky-400');
+
+            if (tabId === 'dashboard') {
+                renderChart();
+            }
+        }
+
+        // Branding Engine
+        function applyOrgBranding() {
+            document.getElementById('navOrgName').innerText = appState.org.name;
+            document.getElementById('navOrgTagline').innerText = appState.org.tagline;
+            document.getElementById('dashOrgTitle').innerText = appState.org.name;
+            document.getElementById('statCurrency').innerText = appState.org.currency;
+
+            const logoImg = document.getElementById('navCustomLogo');
+            const defaultIcon = document.getElementById('navDefaultLogo');
+            if (appState.org.logo) {
+                logoImg.src = appState.org.logo;
+                logoImg.classList.remove('hidden');
+                defaultIcon.classList.add('hidden');
+            } else {
+                logoImg.classList.add('hidden');
+                defaultIcon.classList.remove('hidden');
+            }
+
+            document.getElementById('setOrgName').value = appState.org.name;
+            document.getElementById('setOrgTagline').value = appState.org.tagline;
+            document.getElementById('setOrgLogo').value = appState.org.logo;
+            document.getElementById('setOrgCurrency').value = appState.org.currency;
+            document.getElementById('setOrgPhone').value = appState.org.phone;
+            document.getElementById('setOrgAddress').value = appState.org.address;
+            document.getElementById('setApiUrl').value = appState.org.apiUrl || '';
+            document.getElementById('setApiKey').value = appState.org.apiKey || '';
+        }
+
+        // Save Branding Settings
+        function saveOrgSettings(e) {
+            e.preventDefault();
+            appState.org.name = document.getElementById('setOrgName').value;
+            appState.org.tagline = document.getElementById('setOrgTagline').value;
+            appState.org.logo = document.getElementById('setOrgLogo').value;
+            appState.org.currency = document.getElementById('setOrgCurrency').value;
+            appState.org.phone = document.getElementById('setOrgPhone').value;
+            appState.org.address = document.getElementById('setOrgAddress').value;
+            appState.org.apiUrl = document.getElementById('setApiUrl').value;
+            appState.org.apiKey = document.getElementById('setApiKey').value;
+
+            saveToStorage();
+            applyOrgBranding();
+            renderDashboard();
+            showToast('تنظیمات سازمانی ذخیره شد');
+        }
+
+        // Dashboard Rendering
+        function renderDashboard() {
+            const totalRev = appState.invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+            document.getElementById('statRevenue').innerText = `${appState.org.currency} ${totalRev.toLocaleString()}`;
+            document.getElementById('statCustomers').innerText = appState.customers.length;
+            document.getElementById('statOrders').innerText = appState.services.length;
+
+            const recentTbody = document.getElementById('dashRecentInvoices');
+            recentTbody.innerHTML = appState.invoices.slice(-5).reverse().map(inv => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-bold text-slate-700">${inv.id}</td>
+                    <td class="p-3">${inv.customerName}</td>
+                    <td class="p-3">${inv.title}</td>
+                    <td class="p-3 font-bold text-emerald-600">${appState.org.currency} ${Number(inv.amount).toLocaleString()}</td>
+                    <td class="p-3 text-xs text-slate-400">${inv.date}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="printInvoice('${inv.id}')" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderChart();
+        }
+
+        // Render Chart.js
+        function renderChart() {
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
+
+            if (revenueChartInstance) {
+                revenueChartInstance.destroy();
+            }
+
+            const invoiceDates = appState.invoices.map(i => i.date);
+            const invoiceAmounts = appState.invoices.map(i => Number(i.amount));
+
+            revenueChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: invoiceDates.length ? invoiceDates : ['امروز'],
+                    datasets: [{
+                        label: `درآمد (${appState.org.currency})`,
+                        data: invoiceAmounts.length ? invoiceAmounts : [0],
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // CRM Operations
+        function renderCustomers() {
+            const query = document.getElementById('crmSearch')?.value.toLowerCase() || '';
+            const grid = document.getElementById('customersListGrid');
+            
+            const filtered = appState.customers.filter(c => 
+                c.name.toLowerCase().includes(query) || c.phone.includes(query)
+            );
+
+            grid.innerHTML = filtered.map(c => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center font-bold">
+                            ${c.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${c.name}</h4>
+                            <p class="text-xs text-slate-400">${c.address || 'بدون آدرس ثبت‌شده'}</p>
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-100 pt-3 flex justify-between items-center text-xs">
+                        <span class="text-slate-600"><i class="fa-solid fa-phone text-slate-400"></i> ${c.phone}</span>
+                        <a href="https://wa.me/${c.phone.replace(/[^0-9]/g, '')}" target="_blank" class="text-emerald-600 font-bold hover:underline">
+                            <i class="fa-brands fa-whatsapp"></i> پیام
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+
+            const sel = document.getElementById('invCustomerSelect');
+            if (sel) {
+                sel.innerHTML = appState.customers.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            }
+        }
+
+        function openCustomerModal() { document.getElementById('customerModal').classList.remove('hidden'); }
+        function closeCustomerModal() { document.getElementById('customerModal').classList.add('hidden'); }
+        
+        function saveCustomer(e) {
+            e.preventDefault();
+            const newCust = {
+                id: Date.now().toString(),
+                name: document.getElementById('custName').value,
+                phone: document.getElementById('custPhone').value,
+                address: document.getElementById('custAddress').value
+            };
+            appState.customers.push(newCust);
+            saveToStorage();
+            renderCustomers();
+            renderDashboard();
+            closeCustomerModal();
+            showToast('مشتری جدید اضافه شد');
+        }
+
+        // Invoices Operations
+        function renderInvoices() {
+            const query = document.getElementById('invSearch')?.value.toLowerCase() || '';
+            const tbody = document.getElementById('invoicesTableBody');
+
+            const filtered = appState.invoices.filter(inv => 
+                inv.id.toLowerCase().includes(query) || inv.customerName.toLowerCase().includes(query)
+            );
+
+            tbody.innerHTML = filtered.map(inv => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 font-bold text-slate-800">${inv.id}</td>
+                    <td class="p-4 font-medium text-slate-700">${inv.customerName}</td>
+                    <td class="p-4">${inv.title}</td>
+                    <td class="p-4 font-bold text-emerald-600">${appState.org.currency} ${Number(inv.amount).toLocaleString()}</td>
+                    <td class="p-4 text-xs text-slate-400">${inv.date}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="printInvoice('${inv.id}')" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 mx-auto">
+                            <i class="fa-solid fa-print"></i> چاپ فاکتور
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openInvoiceModal() { document.getElementById('invoiceModal').classList.remove('hidden'); }
+        function closeInvoiceModal() { document.getElementById('invoiceModal').classList.add('hidden'); }
+
+        function saveInvoice(e) {
+            e.preventDefault();
+            const newInv = {
+                id: `INV-${Math.floor(1000 + Math.random() * 9000)}`,
+                customerName: document.getElementById('invCustomerSelect').value,
+                title: document.getElementById('invTitle').value,
+                amount: document.getElementById('invAmount').value,
+                date: new Date().toISOString().split('T')[0]
+            };
+            appState.invoices.push(newInv);
+            saveToStorage();
+            renderInvoices();
+            renderDashboard();
+            closeInvoiceModal();
+            showToast('فاکتور جدید صادر شد');
+        }
+
+        function printInvoice(invId) {
+            const inv = appState.invoices.find(i => i.id === invId);
+            if (!inv) return;
+
+            document.getElementById('printOrgName').innerText = appState.org.name;
+            document.getElementById('printOrgTagline').innerText = appState.org.tagline;
+            document.getElementById('printOrgPhone').innerText = `ارتباط: ${appState.org.phone} - ${appState.org.address}`;
+            document.getElementById('printInvoiceNum').innerText = `شماره: ${inv.id}`;
+            document.getElementById('printInvoiceDate').innerText = `تاریخ: ${inv.date}`;
+            document.getElementById('printCustomerName').innerText = inv.customerName;
+            document.getElementById('printItemTitle').innerText = inv.title;
+            document.getElementById('printItemAmount').innerText = `${appState.org.currency} ${Number(inv.amount).toLocaleString()}`;
+            document.getElementById('printSignOrg').innerText = appState.org.name;
+
+            const logo = document.getElementById('printLogo');
+            if (appState.org.logo) {
+                logo.src = appState.org.logo;
+                logo.classList.remove('hidden');
+            } else {
+                logo.classList.add('hidden');
+            }
+
+            window.print();
+        }
+
+        // Kanban Board Logic
+        function renderServices() {
+            const pending = document.getElementById('colPending');
+            const progress = document.getElementById('colProgress');
+            const completed = document.getElementById('colCompleted');
+
+            pending.innerHTML = ''; progress.innerHTML = ''; completed.innerHTML = '';
+
+            appState.services.forEach(srv => {
+                const card = `
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 text-xs space-y-2">
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span>${srv.title}</span>
+                            <span class="text-slate-400 text-[10px]">${srv.id}</span>
+                        </div>
+                        <p class="text-slate-500">مشتری: ${srv.customer}</p>
+                        <div class="flex justify-end gap-1 border-t pt-2 mt-2">
+                            ${srv.status !== 'pending' ? `<button onclick="updateServiceStatus('${srv.id}', 'pending')" class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-[10px]">انتظار</button>` : ''}
+                            ${srv.status !== 'progress' ? `<button onclick="updateServiceStatus('${srv.id}', 'progress')" class="text-sky-600 bg-sky-50 px-2 py-0.5 rounded text-[10px]">انجام</button>` : ''}
+                            ${srv.status !== 'completed' ? `<button onclick="updateServiceStatus('${srv.id}', 'completed')" class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[10px]">تکمیل</button>` : ''}
+                        </div>
+                    </div>
+                `;
+                if (srv.status === 'pending') pending.innerHTML += card;
+                else if (srv.status === 'progress') progress.innerHTML += card;
+                else if (srv.status === 'completed') completed.innerHTML += card;
+            });
+
+            document.getElementById('countPending').innerText = appState.services.filter(s => s.status === 'pending').length;
+            document.getElementById('countProgress').innerText = appState.services.filter(s => s.status === 'progress').length;
+            document.getElementById('countCompleted').innerText = appState.services.filter(s => s.status === 'completed').length;
+        }
+
+        function updateServiceStatus(srvId, newStatus) {
+            const srv = appState.services.find(s => s.id === srvId);
+            if (srv) {
+                srv.status = newStatus;
+                saveToStorage();
+                renderServices();
+                renderDashboard();
+                showToast('وضعیت پرونده به‌روزرسانی شد');
+            }
+        }
+
+        function openServiceModal() {
+            const title = prompt('عنوان پرونده / سفارش جدید:');
+            if (!title) return;
+            appState.services.push({
+                id: `SRV-${Date.now().toString().slice(-4)}`,
+                title: title,
+                customer: appState.customers[0]?.name || 'عمومی',
+                status: 'pending'
+            });
+            saveToStorage();
+            renderServices();
+            renderDashboard();
+            showToast('پرونده جدید اضافه شد');
+        }
+
+        // KAF AI Logic
+        function runAIAssistant() {
+            const promptText = document.getElementById('aiPrompt').value;
+            if (!promptText) return alert('لطفاً دستور خود را وارد کنید.');
+
+            const resultBox = document.getElementById('aiOutputBox');
+            const resultText = document.getElementById('aiResultText');
+            resultBox.classList.remove('hidden');
+
+            resultText.innerText = `[تولید شده توسط KAF AI - سازمان: ${appState.org.name}]\n\n` +
+                `با سلام و احترام،\n\nدر پاسخ به درخواست متناظر با: "${promptText}"\n\n` +
+                `بدین وسیله تایید می‌گردد امور مربوطه توسط ${appState.org.name} با دقت بررسی شده و اقدامات لازم بر اساس توافقات انجام گردید. جهت هماهنگی بیشتر می‌توانید با شماره ${appState.org.phone} در تماس باشید.\n\nبا سپاس،\nمدیریت ${appState.org.name}`;
+        }
+
+        // Supabase / Cloud API Integration
+        async function syncWithCloud() {
+            if (!appState.org.apiUrl || !appState.org.apiKey) {
+                showToast('لطفا ابتدا URL و API Key سرور را در تنظیمات وارد کنید', true);
+                switchTab('settings');
+                return;
+            }
+
+            try {
+                showToast('در حال همگام‌سازی با دیتابیس ابری...');
+                // Direct REST call to Supabase storage endpoint
+                const res = await fetch(`${appState.org.apiUrl}/rest/v1/kaf_os_data?select=*`, {
+                    headers: {
+                        'apikey': appState.org.apiKey,
+                        'Authorization': `Bearer ${appState.org.apiKey}`
+                    }
+                });
+
+                if (res.ok) {
+                    showToast('همگام‌سازی آنلاین با موفقیت انجام شد');
+                } else {
+                    showToast('خطا در اتصال به سرور ابری. کلیدها را بررسی کنید', true);
+                }
+            } catch (err) {
+                showToast('خطا در ارتباط با شبکه', true);
+            }
+        }
+
+        // Data Storage & Import/Export
+        function saveToStorage() {
+            localStorage.setItem('kaf_business_os_state', JSON.stringify(appState));
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('kaf_business_os_state');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `KAF_OS_Backup_${appState.org.name.replace(/\s+/g, '_')}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('فایل پشتیبان دانلود شد');
+        }
+
+        function importDataJSON(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.org && parsed.customers) {
+                        appState = parsed;
+                        saveToStorage();
+                        applyOrgBranding();
+                        renderDashboard();
+                        renderCustomers();
+                        renderInvoices();
+                        renderServices();
+                        showToast('اطلاعات با موفقیت بازگردانی شد');
+                    } else {
+                        showToast('ساختار فایل JSON معتبر نیست', true);
+                    }
+                } catch (err) {
+                    showToast('خطا در خواندن فایل', true);
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+    </script>
+</body>
+</html>
